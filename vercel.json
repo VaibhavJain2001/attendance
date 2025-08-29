@@ -1,18 +1,9 @@
 {
   "version": 2,
-  "functions": {
-    "api/index.php": {
-      "runtime": "vercel-php@0.7.3",
-      "memory": 1024,
-      "maxDuration": 10
-    }
-  },
-  "buildCommand": "composer install --no-dev --optimize-autoloader && php artisan config:cache && php artisan route:cache && npm ci && npm run build",
-  "routes": [
-    { "src": "/(.*)", "dest": "/api/index.php" }
-  ],
   "builds": [
     { "src": "Dockerfile", "use": "@vercel/docker" }
+  ],
+  "routes": [
+    { "src": "/(.*)", "dest": "/" }
   ]
 }
-
