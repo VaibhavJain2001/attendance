@@ -10,5 +10,9 @@
   "buildCommand": "composer install --no-dev --optimize-autoloader && php artisan config:cache && php artisan route:cache && npm ci && npm run build",
   "routes": [
     { "src": "/(.*)", "dest": "/api/index.php" }
+  ],
+  "builds": [
+    { "src": "Dockerfile", "use": "@vercel/docker" }
   ]
 }
+
