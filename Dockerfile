@@ -1,4 +1,4 @@
-# Use PHP 8.2 FPM image
+# Use PHP 8.2 FPM
 FROM php:8.2-fpm
 
 # Install system dependencies
@@ -16,16 +16,17 @@ WORKDIR /var/www/html
 COPY . .
 
 # Install PHP dependencies
-RUN composer install --no-dev --optimize-autoloader
+RUN composer install --no-dev --optimize-autoloader --no-scripts
 
-# Install Node dependencies and build frontend assets
+# Install Node dependencies & build assets
 RUN npm ci && npm run build
 
-# Clear and cache Laravel configs
-RUN php artisan config:cache && php artisan route:cache && php artisan view:cache
+# Copy entrypoint script
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
-# Expose port 9000 for PHP-FPM
+# Expose PHP-FPM port
 EXPOSE 9000
 
-# Start PHP-FPM server
-CMD ["php-fpm"]
+# Use entrypoint to run DB-dependent commands at runtime
+CMD ["entrypoint.sh"]
