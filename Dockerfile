@@ -1,42 +1,31 @@
-# Use PHP with Apache
-FROM php:8.2-apache
+FROM php:8.2-fpm
 
-# Install system dependencies
+# Install dependencies
 RUN apt-get update && apt-get install -y \
-    git \
-    unzip \
-    zip \
-    curl \
-    libonig-dev \
-    libxml2-dev \
-    && docker-php-ext-install pdo pdo_mysql mbstring xml
+    git curl libpng-dev libonig-dev libxml2-dev zip unzip libzip-dev nginx \
+    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
 
 # Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Enable Apache mod_rewrite
-RUN a2enmod rewrite
-
 # Set working directory
 WORKDIR /var/www/html
 
-# Copy project files
+# Copy project
 COPY . .
 
-# Install PHP dependencies
+# Install dependencies
 RUN composer install --no-dev --optimize-autoloader
 
-# Install Node.js (for Vite build)
-RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
-    && apt-get install -y nodejs \
-    && npm ci && npm run build
+# Laravel cache optimizations
+RUN php artisan config:clear && php artisan cache:clear && php artisan route:clear
 
-# Set Apache document root to public/
-ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
-RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/000-default.conf
+# Fix permissions (important!)
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
+    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Expose port 80
-EXPOSE 80
+# Expose port (Render will map it)
+EXPOSE 8080
 
-# Start Apache
-CMD ["apache2-foreground"]
+# Start PHP-FPM and Nginx
+CMD service nginx start && php-fpm
