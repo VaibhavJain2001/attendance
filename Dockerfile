@@ -1,9 +1,10 @@
-# Use PHP 8.2 FPM
+# Use official PHP 8.2 FPM image
 FROM php:8.2-fpm
 
-# Install system dependencies, Nginx, Node.js, npm
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
-    unzip git curl libpq-dev libzip-dev zip nodejs npm nginx \
+    git unzip libzip-dev libpq-dev zip curl npm nodejs \
+    && docker-php-ext-install pdo pdo_mysql zip \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Composer globally
@@ -16,20 +17,13 @@ WORKDIR /var/www/html
 COPY . .
 
 # Install PHP dependencies
-RUN composer install --no-dev --optimize-autoloader --no-scripts
+RUN composer install --no-dev --optimize-autoloader
 
-# Install Node dependencies & build assets
-RUN npm ci && npm run build
+# Set proper permissions for Laravel
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Copy entrypoint script
-COPY entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
+# Expose port
+EXPOSE 9000
 
-# Copy Nginx config
-COPY nginx.conf /etc/nginx/sites-available/default
-
-# Expose HTTP port (Render expects HTTP)
-EXPOSE 8080
-
-# Use entrypoint to run DB-dependent commands and start services
-CMD ["entrypoint.sh"]
+# Start PHP-FPM
+CMD ["php-fpm"]
