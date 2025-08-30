@@ -1,31 +1,35 @@
+# Production Dockerfile for Laravel
+
 FROM php:8.2-fpm
 
-# Install dependencies
+# Install system deps
 RUN apt-get update && apt-get install -y \
-    git curl libpng-dev libonig-dev libxml2-dev zip unzip libzip-dev nginx \
-    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
+    unzip git curl libpq-dev libzip-dev zip \
+    && docker-php-ext-install pdo pdo_mysql zip
 
-# Install Composer
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+# Install composer
+COPY --from=composer:2.6 /usr/bin/composer /usr/bin/composer
 
 # Set working directory
-WORKDIR /var/www/html
+WORKDIR /var/www
 
-# Copy project
+# Copy files
 COPY . .
 
-# Install dependencies
+# Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader
 
-# Laravel cache optimizations
-RUN php artisan config:clear && php artisan cache:clear && php artisan route:clear
+# Permissions
+RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
 
-# Fix permissions (important!)
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
-    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+# Don’t run artisan clear here (fails because .env not set yet)
 
-# Expose port (Render will map it)
-EXPOSE 8080
+# Expose port
+EXPOSE 8000
 
-# Start PHP-FPM and Nginx
-CMD service nginx start && php-fpm
+# Start Laravel (artisan commands will run here when container starts)
+CMD php artisan config:clear && \
+    php artisan cache:clear && \
+    php artisan route:clear && \
+    php artisan migrate --force && \
+    php artisan serve --host=0.0.0.0 --port=8000
