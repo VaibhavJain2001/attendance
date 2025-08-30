@@ -1,6 +1,5 @@
-vendor
 node_modules
-.git
-.gitignore
-public/storage
-
+vendor
+storage/*.log
+storage/debugbar
+.env

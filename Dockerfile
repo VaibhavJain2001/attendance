@@ -1,32 +1,31 @@
-# Production Dockerfile for Laravel
+# Use PHP 8.2 FPM image
 FROM php:8.2-fpm
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
-    unzip git curl libpq-dev libzip-dev zip \
-    && docker-php-ext-install pdo pdo_mysql zip
+    unzip git curl libpq-dev libzip-dev zip nodejs npm \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install composer
+# Install Composer globally
 COPY --from=composer:2.6 /usr/bin/composer /usr/bin/composer
 
 # Set working directory
-WORKDIR /var/www
+WORKDIR /var/www/html
 
-# Copy files
+# Copy project files
 COPY . .
 
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader
 
-# Permissions
-RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
+# Install Node dependencies and build frontend assets
+RUN npm ci && npm run build
 
-# Expose port
-EXPOSE 8000
+# Clear and cache Laravel configs
+RUN php artisan config:cache && php artisan route:cache && php artisan view:cache
 
-# Start container
-CMD php artisan key:generate && \
-    php artisan config:cache && \
-    php artisan route:cache && \
-    php artisan migrate --force && \
-    php artisan serve --host=0.0.0.0 --port=${PORT:-8000}
+# Expose port 9000 for PHP-FPM
+EXPOSE 9000
+
+# Start PHP-FPM server
+CMD ["php-fpm"]
