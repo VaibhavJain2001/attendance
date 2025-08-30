@@ -1,8 +1,7 @@
 # Production Dockerfile for Laravel
-
 FROM php:8.2-fpm
 
-# Install system deps
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     unzip git curl libpq-dev libzip-dev zip \
     && docker-php-ext-install pdo pdo_mysql zip
@@ -22,14 +21,12 @@ RUN composer install --no-dev --optimize-autoloader
 # Permissions
 RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
 
-# Don’t run artisan clear here (fails because .env not set yet)
-
 # Expose port
 EXPOSE 8000
 
-# Start Laravel (artisan commands will run here when container starts)
-CMD php artisan config:clear && \
-    php artisan cache:clear && \
-    php artisan route:clear && \
+# Start container
+CMD php artisan key:generate && \
+    php artisan config:cache && \
+    php artisan route:cache && \
     php artisan migrate --force && \
-    php artisan serve --host=0.0.0.0 --port=8000
+    php artisan serve --host=0.0.0.0 --port=${PORT:-8000}
