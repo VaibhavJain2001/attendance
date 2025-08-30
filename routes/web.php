@@ -15,7 +15,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/admin/employees', [AttendanceViewController::class, 'employeeList'])->name('employees.list');
     Route::get('/admin/dashboard', [DashboardController::class, 'adminDashboard'])->name('admin.dashboard');
 
-    Route::get('/attendance/nonce', [AttendanceController::class, 'nonce'])->name('attendance.nonce');
+    //Route::get('/attendance/nonce', [AttendanceController::class, 'nonce'])->name('attendance.nonce');
     Route::post('/attendance/clock-in', [AttendanceController::class, 'clockIn'])->name('attendance.clockin');
     Route::get('/attendance/reports', [AttendanceController::class, 'reports'])->name('attendance.reports');
     Route::get('/user_dashboard', [DashboardController::class, 'index'])->name('user_dashboard');

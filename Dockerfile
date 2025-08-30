@@ -1,9 +1,9 @@
 # Use PHP 8.2 FPM
 FROM php:8.2-fpm
 
-# Install system dependencies
+# Install system dependencies, Nginx, Node.js, npm
 RUN apt-get update && apt-get install -y \
-    unzip git curl libpq-dev libzip-dev zip nodejs npm \
+    unzip git curl libpq-dev libzip-dev zip nodejs npm nginx \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Composer globally
@@ -25,8 +25,11 @@ RUN npm ci && npm run build
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-# Expose PHP-FPM port
-EXPOSE 9000
+# Copy Nginx config
+COPY nginx.conf /etc/nginx/sites-available/default
 
-# Use entrypoint to run DB-dependent commands at runtime
+# Expose HTTP port (Render expects HTTP)
+EXPOSE 8080
+
+# Use entrypoint to run DB-dependent commands and start services
 CMD ["entrypoint.sh"]
